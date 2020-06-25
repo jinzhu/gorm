@@ -399,7 +399,7 @@ func (scope *Scope) getModelStruct(rootScope *Scope, allFields []*StructField) *
 										} else {
 											// generate foreign keys from defined association foreign keys
 											for _, scopeFieldName := range associationForeignKeys {
-												if foreignField := getForeignField(scopeFieldName, modelStruct.StructFields); foreignField != nil {
+												if foreignField := getForeignField(scopeFieldName, allFields); foreignField != nil {
 													foreignKeys = append(foreignKeys, associationType+foreignField.Name)
 													associationForeignKeys = append(associationForeignKeys, foreignField.Name)
 												}
@@ -411,7 +411,7 @@ func (scope *Scope) getModelStruct(rootScope *Scope, allFields []*StructField) *
 											for _, foreignKey := range foreignKeys {
 												if strings.HasPrefix(foreignKey, associationType) {
 													associationForeignKey := strings.TrimPrefix(foreignKey, associationType)
-													if foreignField := getForeignField(associationForeignKey, modelStruct.StructFields); foreignField != nil {
+													if foreignField := getForeignField(associationForeignKey, allFields); foreignField != nil {
 														associationForeignKeys = append(associationForeignKeys, associationForeignKey)
 													}
 												}
@@ -507,7 +507,7 @@ func (scope *Scope) getModelStruct(rootScope *Scope, allFields []*StructField) *
 									} else {
 										// generate foreign keys form association foreign keys
 										for _, associationForeignKey := range tagAssociationForeignKeys {
-											if foreignField := getForeignField(associationForeignKey, modelStruct.StructFields); foreignField != nil {
+											if foreignField := getForeignField(associationForeignKey, allFields); foreignField != nil {
 												foreignKeys = append(foreignKeys, associationType+foreignField.Name)
 												associationForeignKeys = append(associationForeignKeys, foreignField.Name)
 											}
@@ -519,7 +519,7 @@ func (scope *Scope) getModelStruct(rootScope *Scope, allFields []*StructField) *
 										for _, foreignKey := range foreignKeys {
 											if strings.HasPrefix(foreignKey, associationType) {
 												associationForeignKey := strings.TrimPrefix(foreignKey, associationType)
-												if foreignField := getForeignField(associationForeignKey, modelStruct.StructFields); foreignField != nil {
+												if foreignField := getForeignField(associationForeignKey, allFields); foreignField != nil {
 													associationForeignKeys = append(associationForeignKeys, associationForeignKey)
 												}
 											}
