@@ -33,7 +33,7 @@ type ModelC struct {
 
 type Request struct {
 	Name     string
-	Children []Child `gorm:"foreignkey:ParentID;association_foreignkey:ID"`
+	Children []Child `gorm:"foreignkey:ParentID"`
 }
 
 type Child struct {

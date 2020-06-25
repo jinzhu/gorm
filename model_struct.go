@@ -152,10 +152,10 @@ func getForeignField(column string, fields []*StructField) *StructField {
 
 // GetModelStruct get value's model struct, relationships based on struct and tag definition
 func (scope *Scope) GetModelStruct() *ModelStruct {
-	return scope.getModelStruct(make([]*StructField, 0))
+	return scope.getModelStruct(scope, make([]*StructField, 0))
 }
 
-func (scope *Scope) getModelStruct(allFields []*StructField) *ModelStruct {
+func (scope *Scope) getModelStruct(rootScope *Scope, allFields []*StructField) *ModelStruct {
 	var modelStruct ModelStruct
 	// Scope value can't be nil
 	if scope.Value == nil {
@@ -241,7 +241,7 @@ func (scope *Scope) getModelStruct(allFields []*StructField) *ModelStruct {
 					field.IsNormal = true
 				} else if _, ok := field.TagSettingsGet("EMBEDDED"); ok || fieldStruct.Anonymous {
 					// is embedded struct
-					for _, subField := range scope.New(fieldValue).getModelStruct(allFields).StructFields {
+					for _, subField := range scope.New(fieldValue).getModelStruct(rootScope, allFields).StructFields {
 						subField = subField.clone()
 						subField.Names = append([]string{fieldStruct.Name}, subField.Names...)
 						if prefix, ok := field.TagSettingsGet("EMBEDDED_PREFIX"); ok {
@@ -417,7 +417,7 @@ func (scope *Scope) getModelStruct(allFields []*StructField) *ModelStruct {
 												}
 											}
 											if len(associationForeignKeys) == 0 && len(foreignKeys) == 1 {
-												associationForeignKeys = []string{scope.PrimaryKey()}
+												associationForeignKeys = []string{rootScope.PrimaryKey()}
 											}
 										} else if len(foreignKeys) != len(associationForeignKeys) {
 											scope.Err(errors.New("invalid foreign keys, should have same length"))
@@ -525,7 +525,7 @@ func (scope *Scope) getModelStruct(allFields []*StructField) *ModelStruct {
 											}
 										}
 										if len(associationForeignKeys) == 0 && len(foreignKeys) == 1 {
-											associationForeignKeys = []string{scope.PrimaryKey()}
+											associationForeignKeys = []string{rootScope.PrimaryKey()}
 										}
 									} else if len(foreignKeys) != len(associationForeignKeys) {
 										scope.Err(errors.New("invalid foreign keys, should have same length"))
