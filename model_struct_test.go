@@ -31,12 +31,12 @@ type ModelC struct {
 	OtherB   *ModelB `gorm:"foreignkey:OtherBID"`
 }
 
-type Request struct {
+type RequestModel struct {
 	Name     string
-	Children []Child `gorm:"foreignkey:ParentID"`
+	Children []ChildModel `gorm:"foreignkey:ParentID"`
 }
 
-type Child struct {
+type ChildModel struct {
 	ID       string
 	ParentID string
 	Name     string
@@ -44,7 +44,7 @@ type Child struct {
 
 type ResponseModel struct {
 	gorm.Model
-	Request
+	RequestModel
 }
 
 // This test will try to cause a race condition on the model's foreignkey metadata
