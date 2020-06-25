@@ -31,6 +31,22 @@ type ModelC struct {
 	OtherB   *ModelB `gorm:"foreignkey:OtherBID"`
 }
 
+type Request struct {
+	Name     string
+	Children []Child `gorm:"foreignkey:ParentID;association_foreignkey:ID"`
+}
+
+type Child struct {
+	ID       string
+	ParentID string
+	Name     string
+}
+
+type ResponseModel struct {
+	gorm.Model
+	Request
+}
+
 // This test will try to cause a race condition on the model's foreignkey metadata
 func TestModelStructRaceSameModel(t *testing.T) {
 	// use a WaitGroup to execute as much in-sync as possible
@@ -90,4 +106,35 @@ func TestModelStructRaceDifferentModel(t *testing.T) {
 	}
 
 	done.Wait()
+}
+
+func TestModelStructEmbeddedHasMany(t *testing.T) {
+	fields := DB.NewScope(&ResponseModel{}).GetStructFields()
+
+	var childrenField *gorm.StructField
+
+	for i := 0; i < len(fields); i++ {
+		field := fields[i]
+
+		if field != nil && field.Name == "Children" {
+			childrenField = field
+		}
+	}
+
+	if childrenField == nil {
+		t.Error("childrenField should not be nil")
+		return
+	}
+
+	if childrenField.Relationship == nil {
+		t.Error("childrenField.Relation should not be nil")
+		return
+	}
+
+	expected := "has_many"
+	actual := childrenField.Relationship.Kind
+
+	if actual != expected {
+		t.Errorf("childrenField.Relationship.Kind should be %v, but was %v", expected, actual)
+	}
 }

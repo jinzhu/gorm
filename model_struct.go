@@ -152,6 +152,10 @@ func getForeignField(column string, fields []*StructField) *StructField {
 
 // GetModelStruct get value's model struct, relationships based on struct and tag definition
 func (scope *Scope) GetModelStruct() *ModelStruct {
+	return scope.getModelStruct(make([]*StructField, 0))
+}
+
+func (scope *Scope) getModelStruct(allFields []*StructField) *ModelStruct {
 	var modelStruct ModelStruct
 	// Scope value can't be nil
 	if scope.Value == nil {
@@ -237,7 +241,7 @@ func (scope *Scope) GetModelStruct() *ModelStruct {
 					field.IsNormal = true
 				} else if _, ok := field.TagSettingsGet("EMBEDDED"); ok || fieldStruct.Anonymous {
 					// is embedded struct
-					for _, subField := range scope.New(fieldValue).GetModelStruct().StructFields {
+					for _, subField := range scope.New(fieldValue).getModelStruct(allFields).StructFields {
 						subField = subField.clone()
 						subField.Names = append([]string{fieldStruct.Name}, subField.Names...)
 						if prefix, ok := field.TagSettingsGet("EMBEDDED_PREFIX"); ok {
@@ -261,6 +265,7 @@ func (scope *Scope) GetModelStruct() *ModelStruct {
 						}
 
 						modelStruct.StructFields = append(modelStruct.StructFields, subField)
+						allFields = append(allFields, subField)
 					}
 					continue
 				} else {
@@ -422,7 +427,7 @@ func (scope *Scope) GetModelStruct() *ModelStruct {
 
 									for idx, foreignKey := range foreignKeys {
 										if foreignField := getForeignField(foreignKey, toFields); foreignField != nil {
-											if associationField := getForeignField(associationForeignKeys[idx], modelStruct.StructFields); associationField != nil {
+											if associationField := getForeignField(associationForeignKeys[idx], allFields); associationField != nil {
 												// mark field as foreignkey, use global lock to avoid race
 												structsLock.Lock()
 												foreignField.IsForeignKey = true
@@ -530,7 +535,7 @@ func (scope *Scope) GetModelStruct() *ModelStruct {
 
 								for idx, foreignKey := range foreignKeys {
 									if foreignField := getForeignField(foreignKey, toFields); foreignField != nil {
-										if scopeField := getForeignField(associationForeignKeys[idx], modelStruct.StructFields); scopeField != nil {
+										if scopeField := getForeignField(associationForeignKeys[idx], allFields); scopeField != nil {
 											// mark field as foreignkey, use global lock to avoid race
 											structsLock.Lock()
 											foreignField.IsForeignKey = true
@@ -630,6 +635,7 @@ func (scope *Scope) GetModelStruct() *ModelStruct {
 			}
 
 			modelStruct.StructFields = append(modelStruct.StructFields, field)
+			allFields = append(allFields, field)
 		}
 	}
 
