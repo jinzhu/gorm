@@ -515,6 +515,24 @@ func (s *DB) Model(value interface{}) *DB {
 	return c
 }
 
+// SetTable specify the table you would like to run db operations, using the object struct's name.
+func (s *gorm.DB) SetTable(name interface{}) *DB {
+	clone := s.clone()
+	snake := fmt.Sprint(reflect.TypeOf(name).Elem().Name() + "s")
+	clone.search.Table(sqlUtils.ToSnakeCase(snake))
+	clone.Value = nil
+	return clone
+}
+
+// ToSnakeCase change string to snake form.
+func ToSnakeCase(str string) string {
+	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
+}
+
 // Table specify the table you would like to run db operations
 func (s *DB) Table(name string) *DB {
 	clone := s.clone()
