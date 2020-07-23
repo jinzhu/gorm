@@ -519,7 +519,7 @@ func (s *DB) Model(value interface{}) *DB {
 func (s *gorm.DB) SetTable(name interface{}) *DB {
 	clone := s.clone()
 	snake := fmt.Sprint(reflect.TypeOf(name).Elem().Name() + "s")
-	clone.search.Table(sqlUtils.ToSnakeCase(snake))
+	clone.search.Table(ToSnakeCase(snake))
 	clone.Value = nil
 	return clone
 }
