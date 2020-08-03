@@ -62,6 +62,15 @@ func (mssql) Quote(key string) string {
 }
 
 func (s *mssql) DataTypeOf(field *gorm.StructField) string {
+	var sqlType, additionalType = s.SplitDataTypeOf(field)
+
+	if strings.TrimSpace(additionalType) == "" {
+		return sqlType
+	}
+	return fmt.Sprintf("%v %v", sqlType, additionalType)
+}
+
+func (s *mssql) SplitDataTypeOf(field *gorm.StructField) (string, string) {
 	var dataValue, sqlType, size, additionalType = gorm.ParseFieldStructForDialect(field, s)
 
 	if sqlType == "" {
@@ -109,10 +118,7 @@ func (s *mssql) DataTypeOf(field *gorm.StructField) string {
 		panic(fmt.Sprintf("invalid sql type %s (%s) for mssql", dataValue.Type().Name(), dataValue.Kind().String()))
 	}
 
-	if strings.TrimSpace(additionalType) == "" {
-		return sqlType
-	}
-	return fmt.Sprintf("%v %v", sqlType, additionalType)
+	return sqlType, additionalType
 }
 
 func (s mssql) fieldCanAutoIncrement(field *gorm.StructField) bool {
@@ -160,6 +166,16 @@ func (s mssql) HasColumn(tableName string, columnName string) bool {
 
 func (s mssql) ModifyColumn(tableName string, columnName string, typ string) error {
 	_, err := s.db.Exec(fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v %v", tableName, columnName, typ))
+	return err
+}
+
+func (s mssql) Nullable(tableName string, columnName string, colType string, isNullable bool) error {
+	var err error
+	if isNullable {
+		_, err = s.db.Exec(fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v %v NULL", tableName, columnName, colType))
+	} else {
+		_, err = s.db.Exec(fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v %v NOT NULL", tableName, columnName, colType))
+	}
 	return err
 }
 

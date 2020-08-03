@@ -31,6 +31,15 @@ func (mysql) Quote(key string) string {
 
 // Get Data Type for MySQL Dialect
 func (s *mysql) DataTypeOf(field *StructField) string {
+	var sqlType, additionalType = s.SplitDataTypeOf(field)
+
+	if strings.TrimSpace(additionalType) == "" {
+		return sqlType
+	}
+	return fmt.Sprintf("%v %v", sqlType, additionalType)
+}
+
+func (s *mysql) SplitDataTypeOf(field *StructField) (string, string) {
 	var dataValue, sqlType, size, additionalType = ParseFieldStructForDialect(field, s)
 
 	// MySQL allows only one auto increment column per table, and it must
@@ -123,10 +132,7 @@ func (s *mysql) DataTypeOf(field *StructField) string {
 		panic(fmt.Sprintf("invalid sql type %s (%s) in field %s for mysql", dataValue.Type().Name(), dataValue.Kind().String(), field.Name))
 	}
 
-	if strings.TrimSpace(additionalType) == "" {
-		return sqlType
-	}
-	return fmt.Sprintf("%v %v", sqlType, additionalType)
+	return sqlType, additionalType
 }
 
 func (s mysql) RemoveIndex(tableName string, indexName string) error {
@@ -136,6 +142,16 @@ func (s mysql) RemoveIndex(tableName string, indexName string) error {
 
 func (s mysql) ModifyColumn(tableName string, columnName string, typ string) error {
 	_, err := s.db.Exec(fmt.Sprintf("ALTER TABLE %v MODIFY COLUMN %v %v", tableName, columnName, typ))
+	return err
+}
+
+func (s mysql) Nullable(tableName string, columnName string, colType string, isNullable bool) error {
+	var err error
+	if isNullable {
+		_, err = s.db.Exec(fmt.Sprintf("ALTER TABLE %v MODIFY %v %v NULL", tableName, columnName, colType))
+	} else {
+		_, err = s.db.Exec(fmt.Sprintf("ALTER TABLE %v MODIFY %v %v NOT NULL", tableName, columnName, colType))
+	}
 	return err
 }
 

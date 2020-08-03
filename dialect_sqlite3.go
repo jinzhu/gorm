@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -21,6 +22,15 @@ func (sqlite3) GetName() string {
 
 // Get Data Type for Sqlite Dialect
 func (s *sqlite3) DataTypeOf(field *StructField) string {
+	var sqlType, additionalType = s.SplitDataTypeOf(field)
+
+	if strings.TrimSpace(additionalType) == "" {
+		return sqlType
+	}
+	return fmt.Sprintf("%v %v", sqlType, additionalType)
+}
+
+func (s *sqlite3) SplitDataTypeOf(field *StructField) (string, string) {
 	var dataValue, sqlType, size, additionalType = ParseFieldStructForDialect(field, s)
 
 	if sqlType == "" {
@@ -64,10 +74,7 @@ func (s *sqlite3) DataTypeOf(field *StructField) string {
 		panic(fmt.Sprintf("invalid sql type %s (%s) for sqlite3", dataValue.Type().Name(), dataValue.Kind().String()))
 	}
 
-	if strings.TrimSpace(additionalType) == "" {
-		return sqlType
-	}
-	return fmt.Sprintf("%v %v", sqlType, additionalType)
+	return sqlType, additionalType
 }
 
 func (s sqlite3) HasIndex(tableName string, indexName string) bool {
@@ -86,6 +93,10 @@ func (s sqlite3) HasColumn(tableName string, columnName string) bool {
 	var count int
 	s.db.QueryRow(fmt.Sprintf("SELECT count(*) FROM sqlite_master WHERE tbl_name = ? AND (sql LIKE '%%\"%v\" %%' OR sql LIKE '%%%v %%');\n", columnName, columnName), tableName).Scan(&count)
 	return count > 0
+}
+
+func (s sqlite3) Nullable(tableName string, columnName string, colType string, isNullable bool) error {
+	return errors.New("ALTER TABLE in sqlite3 does not support adding or removing constraints")
 }
 
 func (s sqlite3) CurrentDatabase() (name string) {
