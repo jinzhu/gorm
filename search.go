@@ -5,25 +5,26 @@ import (
 )
 
 type search struct {
-	db               *DB
-	whereConditions  []map[string]interface{}
-	orConditions     []map[string]interface{}
-	notConditions    []map[string]interface{}
-	havingConditions []map[string]interface{}
-	joinConditions   []map[string]interface{}
-	initAttrs        []interface{}
-	assignAttrs      []interface{}
-	selects          map[string]interface{}
-	omits            []string
-	orders           []interface{}
-	preload          []searchPreload
-	offset           interface{}
-	limit            interface{}
-	group            string
-	tableName        string
-	raw              bool
-	Unscoped         bool
-	ignoreOrderQuery bool
+	db                        *DB
+	whereConditions           []map[string]interface{}
+	orConditions              []map[string]interface{}
+	notConditions             []map[string]interface{}
+	havingConditions          []map[string]interface{}
+	joinConditions            []map[string]interface{}
+	initAttrs                 []interface{}
+	assignAttrs               []interface{}
+	selects                   map[string]interface{}
+	omits                     []string
+	orders                    []interface{}
+	preload                   []searchPreload
+	offset                    interface{}
+	limit                     interface{}
+	group                     string
+	tableName                 string
+	raw                       bool
+	Unscoped                  bool
+	ignoreOrderQuery          bool
+	ignoreLimitAndOffsetQuery bool
 }
 
 type searchPreload struct {
@@ -33,25 +34,26 @@ type searchPreload struct {
 
 func (s *search) clone() *search {
 	clone := search{
-		db:               s.db,
-		whereConditions:  make([]map[string]interface{}, len(s.whereConditions)),
-		orConditions:     make([]map[string]interface{}, len(s.orConditions)),
-		notConditions:    make([]map[string]interface{}, len(s.notConditions)),
-		havingConditions: make([]map[string]interface{}, len(s.havingConditions)),
-		joinConditions:   make([]map[string]interface{}, len(s.joinConditions)),
-		initAttrs:        make([]interface{}, len(s.initAttrs)),
-		assignAttrs:      make([]interface{}, len(s.assignAttrs)),
-		selects:          s.selects,
-		omits:            make([]string, len(s.omits)),
-		orders:           make([]interface{}, len(s.orders)),
-		preload:          make([]searchPreload, len(s.preload)),
-		offset:           s.offset,
-		limit:            s.limit,
-		group:            s.group,
-		tableName:        s.tableName,
-		raw:              s.raw,
-		Unscoped:         s.Unscoped,
-		ignoreOrderQuery: s.ignoreOrderQuery,
+		db:                        s.db,
+		whereConditions:           make([]map[string]interface{}, len(s.whereConditions)),
+		orConditions:              make([]map[string]interface{}, len(s.orConditions)),
+		notConditions:             make([]map[string]interface{}, len(s.notConditions)),
+		havingConditions:          make([]map[string]interface{}, len(s.havingConditions)),
+		joinConditions:            make([]map[string]interface{}, len(s.joinConditions)),
+		initAttrs:                 make([]interface{}, len(s.initAttrs)),
+		assignAttrs:               make([]interface{}, len(s.assignAttrs)),
+		selects:                   s.selects,
+		omits:                     make([]string, len(s.omits)),
+		orders:                    make([]interface{}, len(s.orders)),
+		preload:                   make([]searchPreload, len(s.preload)),
+		offset:                    s.offset,
+		limit:                     s.limit,
+		group:                     s.group,
+		tableName:                 s.tableName,
+		raw:                       s.raw,
+		Unscoped:                  s.Unscoped,
+		ignoreOrderQuery:          s.ignoreOrderQuery,
+		ignoreLimitAndOffsetQuery: s.ignoreLimitAndOffsetQuery,
 	}
 	for i, value := range s.whereConditions {
 		clone.whereConditions[i] = value

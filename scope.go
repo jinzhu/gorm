@@ -797,6 +797,10 @@ func (scope *Scope) orderSQL() string {
 }
 
 func (scope *Scope) limitAndOffsetSQL() string {
+	if scope.Search.ignoreLimitAndOffsetQuery {
+		return ""
+	}
+
 	sql, err := scope.Dialect().LimitAndOffsetSQL(scope.Search.limit, scope.Search.offset)
 	scope.Err(err)
 	return sql
@@ -1031,6 +1035,7 @@ func (scope *Scope) count(value interface{}) *Scope {
 		}
 	}
 	scope.Search.ignoreOrderQuery = true
+	scope.Search.ignoreLimitAndOffsetQuery = true
 	scope.Err(scope.row().Scan(value))
 	return scope
 }

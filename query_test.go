@@ -586,6 +586,14 @@ func TestCount(t *testing.T) {
 	if count3 != 2 {
 		t.Errorf("Should get correct count, but got %v", count3)
 	}
+
+	if err := DB.Model(&User{}).Limit(1).Offset(2).Count(&count).Error; err != nil {
+		t.Errorf("Not error should happen, but got %v", err)
+	}
+
+	if count != 2 {
+		t.Errorf("Should get correct count, but got %v", count)
+	}
 }
 
 func TestNot(t *testing.T) {
