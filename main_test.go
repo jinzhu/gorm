@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1336,6 +1337,34 @@ func TestCountWithQueryOption(t *testing.T) {
 
 	if count != 1 {
 		t.Error("Unexpected result on query count with query_option")
+	}
+}
+
+func TestSubQueryWithQueryOption(t *testing.T) {
+	db := DB.New()
+
+	subQuery := db.Model(User{}).Select("users.id").
+		Set("gorm:query_option", "WHERE users.name='user2'").
+		SubQuery()
+
+	matched, _ := regexp.MatchString(
+		`^&{.+\s+WHERE users\.name='user2'.*\s\[]}$`, fmt.Sprint(subQuery))
+	if !matched {
+		t.Error("Unexpected result of SubQuery with query_option")
+	}
+}
+
+func TestQueryExprWithQueryOption(t *testing.T) {
+	db := DB.New()
+
+	queryExpr := db.Model(User{}).Select("users.id").
+		Set("gorm:query_option", "WHERE users.name='user2'").
+		QueryExpr()
+
+	matched, _ := regexp.MatchString(
+		`^&{.+\s+WHERE users\.name='user2'.*\s\[]}$`, fmt.Sprint(queryExpr))
+	if !matched {
+		t.Error("Unexpected result of QueryExpr with query_option")
 	}
 }
 

@@ -841,12 +841,16 @@ func (scope *Scope) joinsSQL() string {
 }
 
 func (scope *Scope) prepareQuerySQL() {
+	var sql string
 	if scope.Search.raw {
-		scope.Raw(scope.CombinedConditionSql())
+		sql = scope.CombinedConditionSql()
 	} else {
-		scope.Raw(fmt.Sprintf("SELECT %v FROM %v %v", scope.selectSQL(), scope.QuotedTableName(), scope.CombinedConditionSql()))
+		sql = fmt.Sprintf("SELECT %v FROM %v %v", scope.selectSQL(), scope.QuotedTableName(), scope.CombinedConditionSql())
 	}
-	return
+	if str, ok := scope.Get("gorm:query_option"); ok {
+		sql += addExtraSpaceIfExist(fmt.Sprint(str))
+	}
+	scope.Raw(sql)
 }
 
 func (scope *Scope) inlineCondition(values ...interface{}) *Scope {
