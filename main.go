@@ -85,7 +85,7 @@ func Open(dialect string, args ...interface{}) (db *DB, err error) {
 	db = &DB{
 		db:        dbSQL,
 		logger:    defaultLogger,
-		callbacks: DefaultCallback,
+		callbacks: DefaultCallback.clone(defaultLogger),
 		dialect:   newDialect(dialect, dbSQL),
 	}
 	db.parent = db
