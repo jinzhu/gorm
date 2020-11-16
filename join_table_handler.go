@@ -128,16 +128,16 @@ func (s JoinTableHandler) Add(handler JoinTableHandlerInterface, db *DB, source 
 
 	quotedTable := scope.Quote(handler.Table(db))
 	sql := fmt.Sprintf(
-		"INSERT INTO %v (%v) SELECT %v %v WHERE NOT EXISTS (SELECT * FROM %v WHERE %v)",
+		"INSERT INTO %v (%v) VALUES(%v)",
 		quotedTable,
 		strings.Join(assignColumns, ","),
 		strings.Join(binVars, ","),
-		scope.Dialect().SelectFromDummyTable(),
-		quotedTable,
-		strings.Join(conditions, " AND "),
 	)
-
-	return db.Exec(sql, values...).Error
+	checkSql := fmt.Sprintf("SELECT * FROM %v WHERE %v FOR UPDATE", quotedTable, strings.Join(conditions, " AND "))
+	if db.Exec(checkSql); db.RowsAffected == 0 {
+		return db.Exec(sql, values...).Error
+	}
+	return nil
 }
 
 // Delete delete relationship in join table for sources
