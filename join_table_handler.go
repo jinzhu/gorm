@@ -122,10 +122,6 @@ func (s JoinTableHandler) Add(handler JoinTableHandlerInterface, db *DB, source 
 		values = append(values, value)
 	}
 
-	for _, value := range values {
-		values = append(values, value)
-	}
-
 	quotedTable := scope.Quote(handler.Table(db))
 	sql := fmt.Sprintf(
 		"INSERT INTO %v (%v) VALUES(%v)",
@@ -134,7 +130,12 @@ func (s JoinTableHandler) Add(handler JoinTableHandlerInterface, db *DB, source 
 		strings.Join(binVars, ","),
 	)
 	checkSql := fmt.Sprintf("SELECT * FROM %v WHERE %v FOR UPDATE", quotedTable, strings.Join(conditions, " AND "))
-	if db.Exec(checkSql); db.RowsAffected == 0 {
+	if db.Dialect().GetName() == "sqlite3" {
+		// sqlite does not support SELECT FOR UPDATE. But it is single thread concurrency, safe here.
+		checkSql = fmt.Sprintf("SELECT * FROM %v WHERE %v", quotedTable, strings.Join(conditions, " AND "))
+	}
+
+	if db.Exec(checkSql, values...); db.Error == nil && db.RowsAffected == 0 {
 		return db.Exec(sql, values...).Error
 	}
 	return nil
