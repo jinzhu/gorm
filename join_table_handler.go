@@ -141,6 +141,7 @@ func (s JoinTableHandler) Add(handler JoinTableHandlerInterface, db *DB, source 
 	}
 	rows.Next()
 	rows.Scan(&checkCount)
+	rows.Close()
 	if checkCount == 0 {
 		return db.Exec(sql, values...).Error
 	}
