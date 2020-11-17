@@ -129,13 +129,19 @@ func (s JoinTableHandler) Add(handler JoinTableHandlerInterface, db *DB, source 
 		strings.Join(assignColumns, ","),
 		strings.Join(binVars, ","),
 	)
-	checkSql := fmt.Sprintf("SELECT * FROM %v WHERE %v FOR UPDATE", quotedTable, strings.Join(conditions, " AND "))
+	checkSql := fmt.Sprintf("SELECT COUNT(1) FROM %v WHERE %v FOR UPDATE", quotedTable, strings.Join(conditions, " AND "))
 	if db.Dialect().GetName() == "sqlite3" {
 		// sqlite does not support SELECT FOR UPDATE. But it is single thread concurrency, safe here.
-		checkSql = fmt.Sprintf("SELECT * FROM %v WHERE %v", quotedTable, strings.Join(conditions, " AND "))
+		checkSql = fmt.Sprintf("SELECT COUNT(1) FROM %v WHERE %v", quotedTable, strings.Join(conditions, " AND "))
 	}
-
-	if db.Exec(checkSql, values...); db.Error == nil && db.RowsAffected == 0 {
+	checkCount := 0
+	rows, err := db.db.Query(checkSql, values...)
+	if err != nil {
+		return err
+	}
+	rows.Next()
+	rows.Scan(&checkCount)
+	if checkCount == 0 {
 		return db.Exec(sql, values...).Error
 	}
 	return nil
