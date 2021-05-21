@@ -3,10 +3,13 @@ package gorm_test
 import (
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/jinzhu/now"
+
+	"github.com/jinzhu/gorm"
 )
 
 func TestCreate(t *testing.T) {
@@ -284,5 +287,27 @@ func TestCreateIgnore(t *testing.T) {
 	}
 	if DB.Dialect().GetName() == "mysql" && DB.Set("gorm:insert_modifier", "IGNORE").Create(&user).Error != nil {
 		t.Error("Should ignore duplicate user insert by insert modifier:IGNORE ")
+	}
+}
+
+func TestFixFullTableScanWhenInsertIgnore(t *testing.T) {
+	pandaYuanYuan := Panda{Number: 200408301001}
+
+	if !DB.NewRecord(pandaYuanYuan) || !DB.NewRecord(&pandaYuanYuan) {
+		t.Error("Panda should be new record before create")
+	}
+
+	if count := DB.Create(&pandaYuanYuan).RowsAffected; count != 1 {
+		t.Error("There should be one record be affected when create record")
+	}
+
+	DB.Callback().Query().Register("gorm:fix_full_table_scan", func(scope *gorm.Scope) {
+		if strings.Contains(scope.SQL, "SELECT") && strings.Contains(scope.SQL, "pandas") && len(scope.SQLVars) == 0 {
+		    t.Error("Should skip force reload when ignore duplicate panda insert")
+		}
+	})
+
+	if DB.Dialect().GetName() == "mysql" && DB.Set("gorm:insert_modifier", "IGNORE").Create(&pandaYuanYuan).Error != nil {
+		t.Error("Should ignore duplicate panda insert by insert modifier:IGNORE ")
 	}
 }

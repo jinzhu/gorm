@@ -283,6 +283,11 @@ func getPreparedUser(name string, role string) *User {
 	}
 }
 
+type Panda struct {
+    Number int64 `gorm:"unique_index:number"`
+    Name string `gorm:"column:name;type:varchar(255);default:null"`
+}
+
 func runMigration() {
 	if err := DB.DropTableIfExists(&User{}).Error; err != nil {
 		fmt.Printf("Got error when try to delete table users, %+v\n", err)
@@ -292,7 +297,7 @@ func runMigration() {
 		DB.Exec(fmt.Sprintf("drop table %v;", table))
 	}
 
-	values := []interface{}{&Short{}, &ReallyLongThingThatReferencesShort{}, &ReallyLongTableNameToTestMySQLNameLengthLimit{}, &NotSoLongTableName{}, &Product{}, &Email{}, &Address{}, &CreditCard{}, &Company{}, &Role{}, &Language{}, &HNPost{}, &EngadgetPost{}, &Animal{}, &User{}, &JoinTable{}, &Post{}, &Category{}, &Comment{}, &Cat{}, &Dog{}, &Hamster{}, &Toy{}, &ElementWithIgnoredField{}, &Place{}}
+	values := []interface{}{&Short{}, &ReallyLongThingThatReferencesShort{}, &ReallyLongTableNameToTestMySQLNameLengthLimit{}, &NotSoLongTableName{}, &Product{}, &Email{}, &Address{}, &CreditCard{}, &Company{}, &Role{}, &Language{}, &HNPost{}, &EngadgetPost{}, &Animal{}, &User{}, &JoinTable{}, &Post{}, &Category{}, &Comment{}, &Cat{}, &Dog{}, &Hamster{}, &Toy{}, &ElementWithIgnoredField{}, &Place{}, &Panda{}}
 	for _, value := range values {
 		DB.DropTable(value)
 	}
