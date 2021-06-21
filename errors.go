@@ -72,3 +72,19 @@ func (errs Errors) Error() string {
 	}
 	return strings.Join(errors, "; ")
 }
+
+// GormError is a custom error with the error and the SQL executed.
+type GormError struct {
+	Err error
+	SQL string
+}
+
+// New is a construtor of custom error.
+func NewGormError(err error, sql string) GormError {
+	return GormError{err, sql}
+}
+
+// Error return the error message.
+func (e GormError) Error() string {
+	return e.Err.Error()
+}

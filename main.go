@@ -827,7 +827,7 @@ func (s *DB) AddError(err error) error {
 			}
 		}
 
-		s.Error = err
+		s.Error = NewGormError(err, s.SQL)
 	}
 	return err
 }
