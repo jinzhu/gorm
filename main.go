@@ -13,6 +13,8 @@ import (
 
 // DB contains information for current db connection
 type DB struct {
+	SQL string
+
 	sync.RWMutex
 	Value        interface{}
 	Error        error

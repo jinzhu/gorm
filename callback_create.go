@@ -128,6 +128,10 @@ func createCallback(scope *Scope) {
 			))
 		}
 
+		if scope.DB() != nil {
+			scope.DB().SQL = FormatSQL(scope.SQL, scope.SQLVars...)
+		}
+
 		// execute create sql: no primaryField
 		if primaryField == nil {
 			if result, err := scope.SQLDB().Exec(scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
