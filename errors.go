@@ -88,7 +88,7 @@ func NewGormError(err error, sql string) GormError {
 }
 
 // Error return the error message.
-func (e GormError) Error() string 
+func (e GormError) Error() string {
 	if e.Err != nil {
 		return e.Err.Error()
 	} else {
