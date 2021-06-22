@@ -6,6 +6,8 @@ import (
 )
 
 var (
+	// ErrNoRecordsInResultSetSQL sql native error on querying with .row() function or similar
+	ErrNoRecordsInResultSetSQL = errors.New("sql: no rows in the result set")
 	// ErrRecordNotFound returns a "record not found error". Occurs only when attempting to query the database with a struct; querying with a slice won't return this error
 	ErrRecordNotFound = errors.New("record not found")
 	// ErrInvalidSQL occurs when you attempt a query with invalid SQL
@@ -23,14 +25,17 @@ type Errors []error
 
 // IsRecordNotFoundError returns true if error contains a RecordNotFound error
 func IsRecordNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
 	if errs, ok := err.(Errors); ok {
 		for _, err := range errs {
-			if err == ErrRecordNotFound {
+			if err.Error() == ErrRecordNotFound.Error() || err.Error() == ErrNoRecordsInResultSetSQL.Error() {
 				return true
 			}
 		}
 	}
-	return err == ErrRecordNotFound
+	return err.Error() == ErrRecordNotFound.Error() || err.Error() == ErrNoRecordsInResultSetSQL.Error()
 }
 
 // GetErrors gets all errors that have occurred and returns a slice of errors (Error type)
@@ -69,4 +74,24 @@ func (errs Errors) Error() string {
 		errors = append(errors, e.Error())
 	}
 	return strings.Join(errors, "; ")
+}
+
+// GormError is a custom error with the error and the SQL executed.
+type GormError struct {
+	Err error
+	SQL string
+}
+
+// New is a construtor of custom error.
+func NewGormError(err error, sql string) GormError {
+	return GormError{err, sql}
+}
+
+// Error return the error message.
+func (e GormError) Error() string {
+	if e.Err != nil {
+		return e.Err.Error()
+	} else {
+		return "unexpected error"
+	}
 }

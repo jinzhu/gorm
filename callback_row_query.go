@@ -24,6 +24,10 @@ func rowQueryCallback(scope *Scope) {
 	if result, ok := scope.InstanceGet("row_query_result"); ok {
 		scope.prepareQuerySQL()
 
+		if scope.DB() != nil {
+			scope.DB().SQL = FormatSQL(scope.SQL, scope.SQLVars...)
+		}
+
 		if str, ok := scope.Get("gorm:query_hint"); ok {
 			scope.SQL = fmt.Sprint(str) + scope.SQL
 		}
@@ -31,7 +35,13 @@ func rowQueryCallback(scope *Scope) {
 		if rowResult, ok := result.(*RowQueryResult); ok {
 			rowResult.Row = scope.SQLDB().QueryRow(scope.SQL, scope.SQLVars...)
 		} else if rowsResult, ok := result.(*RowsQueryResult); ok {
-			rowsResult.Rows, rowsResult.Error = scope.SQLDB().Query(scope.SQL, scope.SQLVars...)
+			rows, err := scope.SQLDB().Query(scope.SQL, scope.SQLVars...)
+			rowsResult.Rows = rows
+			if rowsResult.Error != nil {
+				rowsResult.Error = NewGormError(err, scope.SQL)
+			} else {
+				rowsResult.Error = err
+			}
 		}
 	}
 }

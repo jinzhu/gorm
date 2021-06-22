@@ -303,7 +303,7 @@ func TestFixFullTableScanWhenInsertIgnore(t *testing.T) {
 
 	DB.Callback().Query().Register("gorm:fix_full_table_scan", func(scope *gorm.Scope) {
 		if strings.Contains(scope.SQL, "SELECT") && strings.Contains(scope.SQL, "pandas") && len(scope.SQLVars) == 0 {
-		    t.Error("Should skip force reload when ignore duplicate panda insert")
+			t.Error("Should skip force reload when ignore duplicate panda insert")
 		}
 	})
 
