@@ -73,12 +73,14 @@ func preloadCallback(scope *Scope) {
 						scope.Err(errors.New("unsupported relation"))
 					}
 
-					preloadedMap[preloadKey] = true
+					if currentScope.DB().Error == nil {
+						preloadedMap[preloadKey] = true
+					}
 					break
 				}
 
 				if !preloadedMap[preloadKey] {
-					scope.Err(fmt.Errorf("can't preload field %s for %s", preloadField, currentScope.GetModelStruct().ModelType))
+					scope.Err(fmt.Errorf("can't preload field %s for %s: %s", preloadField, currentScope.GetModelStruct().ModelType, currentScope.DB().Error))
 					return
 				}
 			}

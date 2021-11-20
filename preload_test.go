@@ -3,8 +3,10 @@ package gorm_test
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/jinzhu/gorm"
@@ -189,6 +191,108 @@ func TestNestedPreload1(t *testing.T) {
 
 	if err := DB.Preload("Level2").Preload("Level2.Level1").Find(&got, "name = ?", "not_found").Error; err != gorm.ErrRecordNotFound {
 		t.Error(err)
+	}
+}
+
+type SQLCommonMock struct {
+	db         *sql.DB
+	errorQuery string
+}
+
+func (s *SQLCommonMock) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return s.db.Exec(query, args...)
+}
+
+func (s *SQLCommonMock) Prepare(query string) (*sql.Stmt, error) {
+	return s.db.Prepare(query)
+}
+
+func (s *SQLCommonMock) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	if query == s.errorQuery {
+		return nil, errors.New("faked database error")
+	}
+	return s.db.Query(query, args...)
+}
+
+func (s *SQLCommonMock) QueryRow(query string, args ...interface{}) *sql.Row {
+	return s.db.QueryRow(query, args...)
+}
+
+func TestNestedPreload1FirstLevelError(t *testing.T) {
+	var err error
+	sqlDB := DB.DB()
+
+	// will not preload Level2 due to faked database error
+	sqlMock := &SQLCommonMock{db: sqlDB, errorQuery: `SELECT * FROM "level2"  WHERE ("level3_id" IN (?))`}
+	localDB, err := gorm.Open(DB.Dialect().GetName(), sqlMock)
+	if err != nil {
+		t.Error(err)
+	}
+
+	type (
+		Level1 struct {
+			ID       uint
+			Value    string
+			Level2ID uint
+		}
+		Level2 struct {
+			ID       uint
+			Level1   Level1
+			Level3ID uint
+		}
+		Level3 struct {
+			ID     uint
+			Name   string
+			Level2 Level2
+		}
+	)
+	localDB.DropTableIfExists(&Level3{})
+	localDB.DropTableIfExists(&Level2{})
+	localDB.DropTableIfExists(&Level1{})
+	if err := localDB.AutoMigrate(&Level3{}, &Level2{}, &Level1{}).Error; err != nil {
+		t.Error(err)
+	}
+
+	savedToDb := Level3{Level2: Level2{Level1: Level1{Value: "value"}}}
+	if err = localDB.Create(&savedToDb).Error; err != nil {
+		t.Error(err)
+	}
+
+	want := savedToDb
+	want.Level2 = Level2{}
+
+	var got Level3
+	if err = localDB.Preload("Level2").Find(&got).Error; errors.Is(err, nil) {
+		t.Error("expecting error on preload failue")
+	}
+
+	if err != nil && !strings.Contains(err.Error(), "faked database error") {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %s; want %s", toJSONString(got), toJSONString(want))
+	}
+
+	// will not preload Level1 due to faked database error
+	sqlMock = &SQLCommonMock{db: sqlDB, errorQuery: `SELECT * FROM "level1"  WHERE ("level2_id" IN (?))`}
+	localDB, err = gorm.Open(DB.Dialect().GetName(), sqlMock)
+	if err != nil {
+		t.Error(err)
+	}
+
+	want = savedToDb
+	want.Level2.Level1 = Level1{}
+	if err = localDB.Preload("Level2.Level1").Find(&got).Error; errors.Is(err, nil) {
+		t.Error("expecting error on nested preload failue")
+	}
+
+	if err != nil && !strings.Contains(err.Error(), "faked database error") {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %s; want %s", toJSONString(got), toJSONString(want))
 	}
 }
 
