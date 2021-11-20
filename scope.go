@@ -339,8 +339,8 @@ func (scope *Scope) QuotedTableName() (name string) {
 	return scope.Quote(scope.TableName())
 }
 
-// CombinedConditionSql return combined condition sql
-func (scope *Scope) CombinedConditionSql() string {
+// CombinedConditionSQL return combined condition sql
+func (scope *Scope) CombinedConditionSQL() string {
 	joinSQL := scope.joinsSQL()
 	whereSQL := scope.whereSQL()
 	if scope.Search.raw {
