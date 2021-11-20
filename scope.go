@@ -360,6 +360,10 @@ func (scope *Scope) Raw(sql string) *Scope {
 func (scope *Scope) Exec() *Scope {
 	defer scope.trace(NowFunc())
 
+	if scope.DB() != nil {
+		scope.DB().SQL = FormatSQL(scope.SQL, scope.SQLVars...)
+	}
+
 	if !scope.HasError() {
 		if result, err := scope.SQLDB().Exec(scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
 			if count, err := result.RowsAffected(); scope.Err(err) == nil {

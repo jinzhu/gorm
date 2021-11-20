@@ -58,6 +58,10 @@ func queryCallback(scope *Scope) {
 
 	scope.prepareQuerySQL()
 
+	if scope.DB() != nil {
+		scope.DB().SQL = FormatSQL(scope.SQL, scope.SQLVars...)
+	}
+
 	if !scope.HasError() {
 		scope.db.RowsAffected = 0
 

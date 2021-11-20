@@ -292,7 +292,7 @@ func (association *Association) Count() int {
 	}
 
 	if err := query.Model(fieldValue).Count(&count).Error; err != nil {
-		association.Error = err
+		association.Error = NewGormError(err, query.SQL)
 	}
 	return count
 }
@@ -371,7 +371,11 @@ func (association *Association) saveAssociations(values ...interface{}) *Associa
 // setErr set error when the error is not nil. And return Association.
 func (association *Association) setErr(err error) *Association {
 	if err != nil {
-		association.Error = err
+		if association.scope != nil {
+			association.Error = NewGormError(err, association.scope.SQL)
+		} else {
+			association.Error = err
+		}
 	}
 	return association
 }

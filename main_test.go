@@ -719,7 +719,7 @@ func TestRaw(t *testing.T) {
 	}
 
 	DB.Exec("update users set name=? where name in (?)", "jinzhu", []string{user1.Name, user2.Name, user3.Name})
-	if DB.Where("name in (?)", []string{user1.Name, user2.Name, user3.Name}).First(&User{}).Error != gorm.ErrRecordNotFound {
+	if err := DB.Where("name in (?)", []string{user1.Name, user2.Name, user3.Name}).First(&User{}).Error; err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 		t.Error("Raw sql to update records")
 	}
 }

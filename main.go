@@ -13,6 +13,8 @@ import (
 
 // DB contains information for current db connection
 type DB struct {
+	SQL string
+
 	sync.RWMutex
 	Value        interface{}
 	Error        error
@@ -83,9 +85,9 @@ func Open(dialect string, args ...interface{}) (db *DB, err error) {
 	}
 
 	db = &DB{
-		db:        dbSQL,
-		logger:    defaultLogger,
-		
+		db:     dbSQL,
+		logger: defaultLogger,
+
 		// Create a clone of the default logger to avoid mutating a shared object when
 		// multiple gorm connections are created simultaneously.
 		callbacks: DefaultCallback.clone(defaultLogger),
@@ -627,7 +629,7 @@ func (s *DB) NewRecord(value interface{}) bool {
 // RecordNotFound check if returning ErrRecordNotFound error
 func (s *DB) RecordNotFound() bool {
 	for _, err := range s.GetErrors() {
-		if err == ErrRecordNotFound {
+		if err != nil && err.Error() == ErrRecordNotFound.Error() {
 			return true
 		}
 	}
@@ -825,7 +827,7 @@ func (s *DB) AddError(err error) error {
 			}
 		}
 
-		s.Error = err
+		s.Error = NewGormError(err, s.SQL)
 	}
 	return err
 }
