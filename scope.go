@@ -401,6 +401,9 @@ func (scope *Scope) InstanceGet(name string) (interface{}, bool) {
 
 // Begin start a transaction
 func (scope *Scope) Begin() *Scope {
+	if _, ok := scope.InstanceGet("gorm:custom_transaction"); ok {
+		return scope
+	}
 	if db, ok := scope.SQLDB().(sqlDb); ok {
 		if tx, err := db.Begin(); scope.Err(err) == nil {
 			scope.db.db = interface{}(tx).(SQLCommon)
@@ -412,6 +415,9 @@ func (scope *Scope) Begin() *Scope {
 
 // CommitOrRollback commit current transaction if no error happened, otherwise will rollback it
 func (scope *Scope) CommitOrRollback() *Scope {
+	if _, ok := scope.InstanceGet("gorm:custom_transaction"); ok {
+		return scope
+	}
 	if _, ok := scope.InstanceGet("gorm:started_transaction"); ok {
 		if db, ok := scope.db.db.(sqlTx); ok {
 			if scope.HasError() {
