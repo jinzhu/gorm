@@ -40,7 +40,7 @@ func deleteCallback(scope *Scope) {
 				"UPDATE %v SET %v=%v%v%v",
 				scope.QuotedTableName(),
 				scope.Quote(deletedAtField.DBName),
-				scope.AddToVars(scope.db.nowFunc()),
+				scope.AddToVars(time.Now().Unix()),
 				addExtraSpaceIfExist(scope.CombinedConditionSql()),
 				addExtraSpaceIfExist(extraOption),
 			)).Exec()
