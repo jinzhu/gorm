@@ -1,9 +1,12 @@
 package gorm_test
 
 import (
+	"errors"
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/jinzhu/gorm"
 )
 
 type Cat struct {
@@ -57,7 +60,7 @@ func TestPolymorphic(t *testing.T) {
 
 	// Query
 	var catToys []Toy
-	if DB.Model(&cat).Related(&catToys, "Toy").RecordNotFound() {
+	if errors.Is(DB.Model(&cat).Related(&catToys, "Toy").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Did not find any has one polymorphic association")
 	} else if len(catToys) != 1 {
 		t.Errorf("Should have found only one polymorphic has one association")
@@ -66,7 +69,7 @@ func TestPolymorphic(t *testing.T) {
 	}
 
 	var dogToys []Toy
-	if DB.Model(&dog).Related(&dogToys, "Toys").RecordNotFound() {
+	if errors.Is(DB.Model(&dog).Related(&dogToys, "Toys").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Did not find any polymorphic has many associations")
 	} else if len(dogToys) != len(dog.Toys) {
 		t.Errorf("Should have found all polymorphic has many associations")
@@ -171,7 +174,7 @@ func TestPolymorphic(t *testing.T) {
 
 	DB.Model(&cat).Association("Toy").Delete(&catToy3)
 
-	if !DB.Model(&cat).Related(&Toy{}, "Toy").RecordNotFound() {
+	if !errors.Is(DB.Model(&cat).Related(&Toy{}, "Toy").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Toy should be deleted with Delete")
 	}
 
@@ -252,7 +255,7 @@ func TestNamedPolymorphic(t *testing.T) {
 
 	// Query
 	var hamsterToys []Toy
-	if DB.Model(&hamster).Related(&hamsterToys, "PreferredToy").RecordNotFound() {
+	if errors.Is(DB.Model(&hamster).Related(&hamsterToys, "PreferredToy").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Did not find any has one polymorphic association")
 	} else if len(hamsterToys) != 1 {
 		t.Errorf("Should have found only one polymorphic has one association")
@@ -260,7 +263,7 @@ func TestNamedPolymorphic(t *testing.T) {
 		t.Errorf("Should have found the proper has one polymorphic association")
 	}
 
-	if DB.Model(&hamster).Related(&hamsterToys, "OtherToy").RecordNotFound() {
+	if errors.Is(DB.Model(&hamster).Related(&hamsterToys, "OtherToy").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Did not find any has one polymorphic association")
 	} else if len(hamsterToys) != 1 {
 		t.Errorf("Should have found only one polymorphic has one association")

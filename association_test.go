@@ -1,6 +1,7 @@
 package gorm_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -100,7 +101,7 @@ func TestBelongsTo(t *testing.T) {
 
 	// Delete
 	DB.Model(&post).Association("Category").Delete(&category2)
-	if DB.Model(&post).Related(&Category{}).RecordNotFound() {
+	if errors.Is(DB.Model(&post).Related(&Category{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Should not delete any category when Delete a unrelated Category")
 	}
 
@@ -129,7 +130,7 @@ func TestBelongsTo(t *testing.T) {
 		Name: "Category 2",
 	})
 
-	if DB.Model(&post).Related(&Category{}).RecordNotFound() {
+	if errors.Is(DB.Model(&post).Related(&Category{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Should find category after append")
 	}
 
@@ -143,7 +144,7 @@ func TestBelongsTo(t *testing.T) {
 		t.Errorf("Post's category should be cleared after Clear")
 	}
 
-	if !DB.Model(&post).Related(&Category{}).RecordNotFound() {
+	if !errors.Is(DB.Model(&post).Related(&Category{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Should not find any category after Clear")
 	}
 
@@ -309,7 +310,7 @@ func TestHasOne(t *testing.T) {
 	}
 
 	DB.Model(&user).Association("CreditCard").Delete(&creditcard3)
-	if !DB.Model(&user).Related(&CreditCard{}).RecordNotFound() {
+	if !errors.Is(DB.Model(&user).Related(&CreditCard{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Should delete credit card with Delete")
 	}
 
@@ -323,7 +324,7 @@ func TestHasOne(t *testing.T) {
 	}
 	DB.Model(&user).Association("CreditCard").Append(&creditcard5)
 
-	if DB.Model(&user).Related(&CreditCard{}).RecordNotFound() {
+	if errors.Is(DB.Model(&user).Related(&CreditCard{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Should added credit card with Append")
 	}
 
@@ -332,7 +333,7 @@ func TestHasOne(t *testing.T) {
 	}
 
 	DB.Model(&user).Association("CreditCard").Clear()
-	if !DB.Model(&user).Related(&CreditCard{}).RecordNotFound() {
+	if !errors.Is(DB.Model(&user).Related(&CreditCard{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Credit card should be deleted with Clear")
 	}
 
@@ -618,7 +619,7 @@ func TestManyToMany(t *testing.T) {
 
 	// Append
 	DB.Model(&user).Association("Languages").Append(&Language{Name: "DE"})
-	if DB.Where("name = ?", "DE").First(&Language{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", "DE").First(&Language{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("New record should be saved when append")
 	}
 
@@ -649,7 +650,7 @@ func TestManyToMany(t *testing.T) {
 	if DB.Model(&user).Association("Languages").Count() != len(totalLanguages)-1 || len(user.Languages) != len(totalLanguages)-1 {
 		t.Errorf("Relations should be deleted with Delete")
 	}
-	if DB.Where("name = ?", "EE").First(&Language{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", "EE").First(&Language{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Language EE should not be deleted")
 	}
 
@@ -798,12 +799,12 @@ func TestRelated(t *testing.T) {
 		t.Errorf("Should get user from credit card correctly")
 	}
 
-	if !DB.Model(&CreditCard{}).Related(&User{}).RecordNotFound() {
+	if !errors.Is(DB.Model(&CreditCard{}).Related(&User{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("RecordNotFound for Related")
 	}
 
 	var company Company
-	if DB.Model(&user).Related(&company, "Company").RecordNotFound() || company.Name != "company1" {
+	if errors.Is(DB.Model(&user).Related(&company, "Company").Error, gorm.ErrRecordNotFound) || company.Name != "company1" {
 		t.Errorf("RecordNotFound for Related")
 	}
 }
@@ -903,7 +904,7 @@ func TestAutoSaveBelongsToAssociation(t *testing.T) {
 
 	DB.Save(&User{Name: "jinzhu", Company: Company{Name: "auto_save_association"}})
 
-	if !DB.Where("name = ?", "auto_save_association").First(&Company{}).RecordNotFound() {
+	if !errors.Is(DB.Where("name = ?", "auto_save_association").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company auto_save_association should not have been saved when autosave is false")
 	}
 
@@ -916,24 +917,24 @@ func TestAutoSaveBelongsToAssociation(t *testing.T) {
 
 	DB.Save(&user)
 
-	if !DB.Where("name = ?", "auto_save_association_new_name").First(&Company{}).RecordNotFound() {
+	if !errors.Is(DB.Where("name = ?", "auto_save_association_new_name").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should not have been updated")
 	}
 
-	if DB.Where("id = ? AND company_id = ?", user.ID, company.ID).First(&User{}).RecordNotFound() {
+	if errors.Is(DB.Where("id = ? AND company_id = ?", user.ID, company.ID).First(&User{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("User's foreign key should have been saved")
 	}
 
 	user2 := User{Name: "jinzhu_2", Company: Company{Name: "auto_save_association_2"}}
 	DB.Set("gorm:association_autocreate", true).Save(&user2)
-	if DB.Where("name = ?", "auto_save_association_2").First(&Company{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", "auto_save_association_2").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company auto_save_association_2 should been created when autocreate is true")
 	}
 
 	user2.Company.Name = "auto_save_association_2_newname"
 	DB.Set("gorm:association_autoupdate", true).Save(&user2)
 
-	if DB.Where("name = ?", "auto_save_association_2_newname").First(&Company{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", "auto_save_association_2_newname").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should been updated")
 	}
 }
@@ -956,7 +957,7 @@ func TestAutoSaveHasOneAssociation(t *testing.T) {
 
 	DB.Save(&User{Name: "jinzhu", Company: Company{Name: "auto_save_has_one_association"}})
 
-	if !DB.Where("name = ?", "auto_save_has_one_association").First(&Company{}).RecordNotFound() {
+	if !errors.Is(DB.Where("name = ?", "auto_save_has_one_association").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company auto_save_has_one_association should not have been saved when autosave is false")
 	}
 
@@ -968,11 +969,11 @@ func TestAutoSaveHasOneAssociation(t *testing.T) {
 
 	DB.Save(&user)
 
-	if !DB.Where("name = ?", "auto_save_has_one_association_new_name").First(&Company{}).RecordNotFound() {
+	if !errors.Is(DB.Where("name = ?", "auto_save_has_one_association_new_name").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should not have been updated")
 	}
 
-	if !DB.Where("name = ? AND user_id = ?", "auto_save_has_one_association", user.ID).First(&Company{}).RecordNotFound() {
+	if !errors.Is(DB.Where("name = ? AND user_id = ?", "auto_save_has_one_association", user.ID).First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should not have been updated")
 	}
 
@@ -983,13 +984,13 @@ func TestAutoSaveHasOneAssociation(t *testing.T) {
 	company.Name = "auto_save_has_one_association_2_new_name"
 	DB.Set("gorm:association_autoupdate", true).Save(&user)
 
-	if DB.Where("name = ? AND user_id = ?", "auto_save_has_one_association_new_name", user.ID).First(&Company{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ? AND user_id = ?", "auto_save_has_one_association_new_name", user.ID).First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should been updated")
 	}
 
 	user2 := User{Name: "jinzhu_2", Company: Company{Name: "auto_save_has_one_association_2"}}
 	DB.Set("gorm:association_autocreate", true).Save(&user2)
-	if DB.Where("name = ?", "auto_save_has_one_association_2").First(&Company{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", "auto_save_has_one_association_2").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company auto_save_has_one_association_2 should been created when autocreate is true")
 	}
 }
@@ -1010,7 +1011,7 @@ func TestAutoSaveMany2ManyAssociation(t *testing.T) {
 
 	DB.Save(&User{Name: "jinzhu", Companies: []Company{{Name: "auto_save_m2m_association"}}})
 
-	if !DB.Where("name = ?", "auto_save_m2m_association").First(&Company{}).RecordNotFound() {
+	if !errors.Is(DB.Where("name = ?", "auto_save_m2m_association").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company auto_save_m2m_association should not have been saved when autosave is false")
 	}
 
@@ -1022,11 +1023,11 @@ func TestAutoSaveMany2ManyAssociation(t *testing.T) {
 
 	DB.Save(&user)
 
-	if !DB.Where("name = ?", "auto_save_m2m_association_new_name").First(&Company{}).RecordNotFound() {
+	if !errors.Is(DB.Where("name = ?", "auto_save_m2m_association_new_name").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should not have been updated")
 	}
 
-	if !DB.Where("name = ?", "auto_save_m2m_association_new_name_2").First(&Company{}).RecordNotFound() {
+	if !errors.Is(DB.Where("name = ?", "auto_save_m2m_association_new_name_2").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should not been created")
 	}
 
@@ -1036,11 +1037,11 @@ func TestAutoSaveMany2ManyAssociation(t *testing.T) {
 
 	DB.Set("gorm:association_autoupdate", true).Set("gorm:association_autocreate", true).Save(&user)
 
-	if DB.Where("name = ?", "auto_save_m2m_association_new_name").First(&Company{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", "auto_save_m2m_association_new_name").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should been updated")
 	}
 
-	if DB.Where("name = ?", "auto_save_m2m_association_new_name_2").First(&Company{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", "auto_save_m2m_association_new_name_2").First(&Company{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Company should been created")
 	}
 

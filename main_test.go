@@ -84,7 +84,8 @@ func OpenTestConnection() (db *gorm.DB, err error) {
 		db.LogMode(false)
 	}
 
-	db.DB().SetMaxIdleConns(10)
+	sqlDB, _ := db.DB()
+	sqlDB.SetMaxIdleConns(10)
 
 	return
 }
@@ -190,7 +191,7 @@ func TestSetTable(t *testing.T) {
 
 	user.Age = 20
 	DB.Table("deleted_users").Save(&user)
-	if DB.Table("deleted_users").First(&user, "name = ? AND age = ?", "DeletedUser", 20).RecordNotFound() {
+	if errors.Is(DB.Table("deleted_users").First(&user, "name = ? AND age = ?", "DeletedUser", 20).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Failed to found updated user")
 	}
 
@@ -1002,11 +1003,11 @@ func TestTimeWithZone(t *testing.T) {
 			t.Errorf("User's birthday should not be changed after find for name=%s, expected bday=%+v but actual value=%+v", name, expectedBirthday, foundBirthday)
 		}
 
-		if DB.Where("id = ? AND birthday >= ?", findUser.Id, user.Birthday.Add(-time.Minute)).First(&findUser2).RecordNotFound() {
+		if errors.Is(DB.Where("id = ? AND birthday >= ?", findUser.Id, user.Birthday.Add(-time.Minute)).First(&findUser2).Error, gorm.ErrRecordNotFound) {
 			t.Errorf("User should be found")
 		}
 
-		if !DB.Where("id = ? AND birthday >= ?", findUser.Id, user.Birthday.Add(time.Minute)).First(&findUser3).RecordNotFound() {
+		if !errors.Is(DB.Where("id = ? AND birthday >= ?", findUser.Id, user.Birthday.Add(time.Minute)).First(&findUser3).Error, gorm.ErrRecordNotFound) {
 			t.Errorf("User should not be found")
 		}
 	}
@@ -1095,7 +1096,12 @@ func TestOpenExistingDB(t *testing.T) {
 	DB.Save(&User{Name: "jnfeinstein"})
 	dialect := os.Getenv("GORM_DIALECT")
 
-	db, err := gorm.Open(dialect, DB.DB())
+	sqlDB, err := DB.DB()
+	if err != nil {
+		t.Errorf("db returned error: %s", err)
+	}
+
+	db, err := gorm.Open(dialect, sqlDB)
 	if err != nil {
 		t.Errorf("Should have wrapped the existing DB connection")
 	}

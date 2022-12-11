@@ -1,0 +1,22 @@
+name: Build
+
+on:
+  push:
+    branches-ignore: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build 👷‍♀️
+    runs-on: ubuntu-latest
+    container: golang:1.19
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@main
+      
+      - name: Run tests
+        run: go test -v ./...

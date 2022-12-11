@@ -1,6 +1,7 @@
 package gorm_test
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -173,11 +174,11 @@ func TestSearchWithPlainSQL(t *testing.T) {
 	DB.Save(&user1).Save(&user2).Save(&user3)
 	scopedb := DB.Where("name LIKE ?", "%PlainSqlUser%")
 
-	if DB.Where("name = ?", user1.Name).First(&User{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", user1.Name).First(&User{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Search with plain SQL")
 	}
 
-	if DB.Where("name LIKE ?", "%"+user1.Name+"%").First(&User{}).RecordNotFound() {
+	if errors.Is(DB.Where("name LIKE ?", "%"+user1.Name+"%").First(&User{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Search with plan SQL (regexp)")
 	}
 
@@ -235,7 +236,7 @@ func TestSearchWithPlainSQL(t *testing.T) {
 		t.Error("no error should happen when query with empty slice, but got: ", err)
 	}
 
-	if DB.Where("name = ?", "none existing").Find(&[]User{}).RecordNotFound() {
+	if errors.Is(DB.Where("name = ?", "none existing").Find(&[]User{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Should not get RecordNotFound error when looking for none existing records")
 	}
 }
@@ -276,15 +277,15 @@ func TestSearchWithStruct(t *testing.T) {
 	user3 := User{Name: "StructSearchUser3", Age: 20, Birthday: parseTime("2020-1-1")}
 	DB.Save(&user1).Save(&user2).Save(&user3)
 
-	if DB.Where(user1.Id).First(&User{}).RecordNotFound() {
+	if errors.Is(DB.Where(user1.Id).First(&User{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Search with primary key")
 	}
 
-	if DB.First(&User{}, user1.Id).RecordNotFound() {
+	if errors.Is(DB.First(&User{}, user1.Id).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Search with primary key as inline condition")
 	}
 
-	if DB.First(&User{}, fmt.Sprintf("%v", user1.Id)).RecordNotFound() {
+	if errors.Is(DB.First(&User{}, fmt.Sprintf("%v", user1.Id)).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Search with primary key as inline condition")
 	}
 
@@ -771,11 +772,11 @@ func TestFindOrCreate(t *testing.T) {
 	}
 
 	DB.Where(&User{Name: "find or create embedded struct"}).Assign(User{Age: 44, CreditCard: CreditCard{Number: "1231231231"}, Emails: []Email{{Email: "jinzhu@assign_embedded_struct.com"}, {Email: "jinzhu-2@assign_embedded_struct.com"}}}).FirstOrCreate(&user8)
-	if DB.Where("email = ?", "jinzhu-2@assign_embedded_struct.com").First(&Email{}).RecordNotFound() {
+	if errors.Is(DB.Where("email = ?", "jinzhu-2@assign_embedded_struct.com").First(&Email{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("embedded struct email should be saved")
 	}
 
-	if DB.Where("email = ?", "1231231231").First(&CreditCard{}).RecordNotFound() {
+	if errors.Is(DB.Where("email = ?", "1231231231").First(&CreditCard{}).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("embedded struct credit card should be saved")
 	}
 }

@@ -1,6 +1,7 @@
 package gorm_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -21,15 +22,15 @@ func TestUpdate(t *testing.T) {
 	DB.First(&product2, product2.Id)
 	updatedAt1 := product1.UpdatedAt
 
-	if DB.First(&Product{}, "code = ?", product1.Code).RecordNotFound() {
+	if errors.Is(DB.First(&Product{}, "code = ?", product1.Code).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Product1 should not be updated")
 	}
 
-	if !DB.First(&Product{}, "code = ?", "product2code").RecordNotFound() {
+	if !errors.Is(DB.First(&Product{}, "code = ?", "product2code").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Product2's code should be updated")
 	}
 
-	if DB.First(&Product{}, "code = ?", "product2newcode").RecordNotFound() {
+	if errors.Is(DB.First(&Product{}, "code = ?", "product2newcode").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Product2's code should be updated")
 	}
 
@@ -41,11 +42,11 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("updatedAt should be updated if something changed")
 	}
 
-	if !DB.First(&Product{}, "code = 'product1code'").RecordNotFound() {
+	if !errors.Is(DB.First(&Product{}, "code = 'product1code'").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Product1's code should be updated")
 	}
 
-	if DB.First(&Product{}, "code = 'product1newcode'").RecordNotFound() {
+	if errors.Is(DB.First(&Product{}, "code = 'product1newcode'").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Product should not be changed to 789")
 	}
 
@@ -130,16 +131,16 @@ func TestUpdates(t *testing.T) {
 	DB.First(&product2, product2.Id)
 	updatedAt2 := product2.UpdatedAt
 
-	if DB.First(&Product{}, "code = ? and price = ?", product2.Code, product2.Price).RecordNotFound() {
+	if errors.Is(DB.First(&Product{}, "code = ? and price = ?", product2.Code, product2.Price).Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Product2 should not be updated")
 	}
 
-	if DB.First(&Product{}, "code = ?", "product1newcode").RecordNotFound() {
+	if errors.Is(DB.First(&Product{}, "code = ?", "product1newcode").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Product1 should be updated")
 	}
 
 	DB.Table("products").Where("code in (?)", []string{"product2code"}).Updates(Product{Code: "product2newcode"})
-	if !DB.First(&Product{}, "code = 'product2code'").RecordNotFound() {
+	if !errors.Is(DB.First(&Product{}, "code = 'product2code'").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("Product2's code should be updated")
 	}
 
@@ -149,7 +150,7 @@ func TestUpdates(t *testing.T) {
 		t.Errorf("updatedAt should be updated if something changed")
 	}
 
-	if DB.First(&Product{}, "code = ?", "product2newcode").RecordNotFound() {
+	if errors.Is(DB.First(&Product{}, "code = ?", "product2newcode").Error, gorm.ErrRecordNotFound) {
 		t.Errorf("product2's code should be updated")
 	}
 
