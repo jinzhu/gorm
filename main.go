@@ -18,6 +18,8 @@ type DB struct {
 	Error        error
 	RowsAffected int64
 
+	ctx context.Context
+
 	// single db
 	db                SQLCommon
 	blockGlobalUpdate bool
@@ -112,18 +114,6 @@ func (s *DB) New() *DB {
 	clone.search = nil
 	clone.Value = nil
 	return clone
-}
-
-type closer interface {
-	Close() error
-}
-
-// Close close current db connection.  If database connection is not an io.Closer, returns an error.
-func (s *DB) Close() error {
-	if db, ok := s.parent.db.(closer); ok {
-		return db.Close()
-	}
-	return errors.New("can't close current db")
 }
 
 // DB get `*sql.DB` from current connection
@@ -573,8 +563,29 @@ func (s *DB) Transaction(fc func(tx *DB) error) (err error) {
 }
 
 // Begin begins a transaction
-func (s *DB) Begin() *DB {
-	return s.BeginTx(context.Background(), &sql.TxOptions{})
+func (s *DB) Begin(opts ...*sql.TxOptions) *DB {
+	ctx := s.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	var opt *sql.TxOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+
+	c := s.clone()
+	if db, ok := c.db.(sqlDb); ok && db != nil {
+		tx, err := db.BeginTx(ctx, opt)
+		c.db = interface{}(tx).(SQLCommon)
+
+		c.dialect.SetDB(c.db)
+		c.AddError(err)
+	} else {
+		c.AddError(ErrCantStartTransaction)
+	}
+
+	return c
 }
 
 // BeginTx begins a transaction with options
@@ -616,20 +627,8 @@ func (s *DB) Rollback() *DB {
 	return s
 }
 
-// RollbackUnlessCommitted rollback a transaction if it has not yet been
-// committed.
-func (s *DB) RollbackUnlessCommitted() *DB {
-	var emptySQLTx *sql.Tx
-	if db, ok := s.db.(sqlTx); ok && db != nil && db != emptySQLTx {
-		err := db.Rollback()
-		// Ignore the error indicating that the transaction has already
-		// been committed.
-		if err != sql.ErrTxDone {
-			s.AddError(err)
-		}
-	} else {
-		s.AddError(ErrInvalidTransaction)
-	}
+func (s *DB) WithContext(ctx context.Context) *DB {
+	s.ctx = ctx
 	return s
 }
 
