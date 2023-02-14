@@ -918,7 +918,7 @@ func TestQueryBuilderRawQueryWithSubquery(t *testing.T) {
 	user = User{Name: "subquery_test_user3", Age: 12}
 	DB.Save(&user)
 
-	var count int
+	var count int64
 	err := DB.Raw("select count(*) from (?) tmp",
 		DB.Table("users").
 			Select("name").
@@ -1149,7 +1149,7 @@ func TestOpenWithOneParameter(t *testing.T) {
 
 func TestSaveAssociations(t *testing.T) {
 	db := DB.New()
-	deltaAddressCount := 0
+	deltaAddressCount := int64(0)
 	if err := db.Model(&Address{}).Count(&deltaAddressCount).Error; err != nil {
 		t.Errorf("failed to fetch address count")
 		t.FailNow()
@@ -1166,8 +1166,8 @@ func TestSaveAssociations(t *testing.T) {
 	}
 	db.Create(placeAddress)
 
-	addressCountShouldBe := func(t *testing.T, expectedCount int) {
-		countFromDB := 0
+	addressCountShouldBe := func(t *testing.T, expectedCount int64) {
+		var countFromDB int64 = 0
 		t.Helper()
 		err := db.Model(&Address{}).Count(&countFromDB).Error
 		if err != nil {
@@ -1207,7 +1207,7 @@ func TestSaveAssociations(t *testing.T) {
 	}
 	addressCountShouldBe(t, deltaAddressCount+3)
 
-	count := 0
+	count := int64(0)
 	db.Model(&Place{}).Where(&Place{
 		PlaceAddressID: placeAddress.ID,
 		OwnerAddressID: ownerAddress1.ID,
@@ -1284,7 +1284,7 @@ func TestCountWithHaving(t *testing.T) {
 	user3.Languages = []Language{}
 	DB.Create(user3)
 
-	var count int
+	var count int64
 	err := db.Model(User{}).Select("users.id").
 		Joins("LEFT JOIN user_languages ON user_languages.user_id = users.id").
 		Joins("LEFT JOIN languages ON user_languages.language_id = languages.id").
@@ -1339,7 +1339,7 @@ func TestCountWithQueryOption(t *testing.T) {
 	DB.Create(&User{Name: "user2"})
 	DB.Create(&User{Name: "user3"})
 
-	var count int
+	var count int64
 	err := db.Model(User{}).Select("users.id").
 		Set("gorm:query_option", "WHERE users.name='user2'").
 		Count(&count).Error

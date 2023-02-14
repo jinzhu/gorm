@@ -258,9 +258,9 @@ func (association *Association) Clear() *Association {
 }
 
 // Count return the count of current associations
-func (association *Association) Count() int {
+func (association *Association) Count() int64 {
 	var (
-		count        = 0
+		count        = int64(0)
 		relationship = association.field.Relationship
 		scope        = association.scope
 		fieldValue   = association.field.Field.Interface()

@@ -253,7 +253,7 @@ func TestSelectWithUpdateWithMap(t *testing.T) {
 
 	var reloadUser User
 	DB.First(&reloadUser, user.Id)
-	DB.Model(&reloadUser).Select("Name", "BillingAddress", "CreditCard", "Company", "Emails").Update(updateValues)
+	DB.Model(&reloadUser).Select("Name", "BillingAddress", "CreditCard", "Company", "Emails").Updates(updateValues)
 
 	var queryUser User
 	DB.Preload("BillingAddress").Preload("ShippingAddress").
@@ -323,7 +323,7 @@ func TestOmitWithUpdateWithMap(t *testing.T) {
 
 	var reloadUser User
 	DB.First(&reloadUser, user.Id)
-	DB.Model(&reloadUser).Omit("Name", "BillingAddress", "CreditCard", "Company", "Emails").Update(updateValues)
+	DB.Model(&reloadUser).Omit("Name", "BillingAddress", "CreditCard", "Company", "Emails").Updates(updateValues)
 
 	var queryUser User
 	DB.Preload("BillingAddress").Preload("ShippingAddress").
@@ -411,6 +411,20 @@ func TestUpdatesWithBlankValues(t *testing.T) {
 	DB.Save(&product)
 
 	DB.Model(&Product{Id: product.Id}).Updates(&Product{Price: 100})
+
+	var product1 Product
+	DB.First(&product1, product.Id)
+
+	if product1.Code != "product1" || product1.Price != 100 {
+		t.Errorf("product's code should not be updated")
+	}
+}
+
+func TestUpdateSingleColumn(t *testing.T) {
+	product := Product{Code: "product1", Price: 10}
+	DB.Save(&product)
+
+	DB.Model(&Product{Id: product.Id}).Update("price", 100)
 
 	var product1 Product
 	DB.First(&product1, product.Id)

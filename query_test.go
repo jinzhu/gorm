@@ -579,7 +579,7 @@ func TestCount(t *testing.T) {
 		t.Errorf("Multiple count in chain")
 	}
 
-	var count3 int
+	var count3 int64
 	if err := DB.Model(&User{}).Where("name in (?)", []string{user2.Name, user2.Name, user3.Name}).Group("id").Count(&count3).Error; err != nil {
 		t.Errorf("Not error should happen, but got %v", err)
 	}

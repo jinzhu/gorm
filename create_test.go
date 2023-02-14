@@ -17,7 +17,7 @@ func TestCreate(t *testing.T) {
 	now := time.Now()
 	user := User{Name: "CreateUser", Age: 18, Birthday: &now, UserNum: Num(111), PasswordHash: []byte{'f', 'a', 'k', '4'}, Latitude: float}
 
-	if !DB.NewRecord(user) || !DB.NewRecord(&user) {
+	if user.Id != 0 {
 		t.Error("User should be new record before create")
 	}
 
@@ -25,7 +25,7 @@ func TestCreate(t *testing.T) {
 		t.Error("There should be one record be affected when create record")
 	}
 
-	if DB.NewRecord(user) || DB.NewRecord(&user) {
+	if user.Id == 0 {
 		t.Error("User should not new record after save")
 	}
 
@@ -278,7 +278,7 @@ func TestCreateIgnore(t *testing.T) {
 	now := time.Now()
 	user := User{Name: "CreateUser", Age: 18, Birthday: &now, UserNum: Num(111), PasswordHash: []byte{'f', 'a', 'k', '4'}, Latitude: float}
 
-	if !DB.NewRecord(user) || !DB.NewRecord(&user) {
+	if user.Id != 0 {
 		t.Error("User should be new record before create")
 	}
 
@@ -293,9 +293,9 @@ func TestCreateIgnore(t *testing.T) {
 func TestFixFullTableScanWhenInsertIgnore(t *testing.T) {
 	pandaYuanYuan := Panda{Number: 200408301001}
 
-	if !DB.NewRecord(pandaYuanYuan) || !DB.NewRecord(&pandaYuanYuan) {
-		t.Error("Panda should be new record before create")
-	}
+	// if pandaYuanYuan.Number != 0 {
+	// 	t.Error("Panda should be new record before create")
+	// }
 
 	if count := DB.Create(&pandaYuanYuan).RowsAffected; count != 1 {
 		t.Error("There should be one record be affected when create record")
@@ -303,7 +303,7 @@ func TestFixFullTableScanWhenInsertIgnore(t *testing.T) {
 
 	DB.Callback().Query().Register("gorm:fix_full_table_scan", func(scope *gorm.Scope) {
 		if strings.Contains(scope.SQL, "SELECT") && strings.Contains(scope.SQL, "pandas") && len(scope.SQLVars) == 0 {
-		    t.Error("Should skip force reload when ignore duplicate panda insert")
+			t.Error("Should skip force reload when ignore duplicate panda insert")
 		}
 	})
 

@@ -613,7 +613,7 @@ func TestManyToMany(t *testing.T) {
 		t.Errorf("Should be able to find many to many relations")
 	}
 
-	if DB.Model(&user).Association("Languages").Count() != len([]string{"ZH", "EN"}) {
+	if int(DB.Model(&user).Association("Languages").Count()) != len([]string{"ZH", "EN"}) {
 		t.Errorf("Count should return correct result")
 	}
 
@@ -635,7 +635,7 @@ func TestManyToMany(t *testing.T) {
 
 	totalLanguages := []string{"ZH", "EN", "DE", "AA", "BB", "CC", "DD", "EE"}
 
-	if DB.Model(&user).Association("Languages").Count() != len(totalLanguages) {
+	if int(DB.Model(&user).Association("Languages").Count()) != len(totalLanguages) {
 		t.Errorf("All appended languages should be saved")
 	}
 
@@ -647,7 +647,7 @@ func TestManyToMany(t *testing.T) {
 	DB.Where("name = ?", "EE").First(&language)
 	DB.Model(&user).Association("Languages").Delete(language, &language)
 
-	if DB.Model(&user).Association("Languages").Count() != len(totalLanguages)-1 || len(user.Languages) != len(totalLanguages)-1 {
+	if int(DB.Model(&user).Association("Languages").Count()) != len(totalLanguages)-1 || len(user.Languages) != len(totalLanguages)-1 {
 		t.Errorf("Relations should be deleted with Delete")
 	}
 	if errors.Is(DB.Where("name = ?", "EE").First(&Language{}).Error, gorm.ErrRecordNotFound) {
@@ -660,7 +660,7 @@ func TestManyToMany(t *testing.T) {
 	DB.Save(&user2)
 
 	DB.Model(&user).Association("Languages").Delete(languages, &languages)
-	if DB.Model(&user).Association("Languages").Count() != len(totalLanguages)-3 || len(user.Languages) != len(totalLanguages)-3 {
+	if int(DB.Model(&user).Association("Languages").Count()) != len(totalLanguages)-3 || len(user.Languages) != len(totalLanguages)-3 {
 		t.Errorf("Relations should be deleted with Delete")
 	}
 
@@ -682,7 +682,7 @@ func TestManyToMany(t *testing.T) {
 	}
 
 	DB.Model(&user).Association("Languages").Replace(&[]Language{{Name: "FF"}, {Name: "JJ"}})
-	if len(user.Languages) != 2 || DB.Model(&user).Association("Languages").Count() != len([]string{"FF", "JJ"}) {
+	if len(user.Languages) != 2 || int(DB.Model(&user).Association("Languages").Count()) != len([]string{"FF", "JJ"}) {
 		t.Errorf("Relations should be replaced")
 	}
 
@@ -781,7 +781,7 @@ func TestRelated(t *testing.T) {
 
 	user1 = User{}
 	DB.Model(&address1).Related(&user1, "BillingAddressId")
-	if DB.NewRecord(user1) {
+	if user1.Id == 0 {
 		t.Errorf("Should get user from address correctly")
 	}
 

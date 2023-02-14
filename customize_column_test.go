@@ -316,7 +316,7 @@ func TestSelfReferencingMany2ManyColumn(t *testing.T) {
 		t.Errorf("Should find created friends correctly")
 	}
 
-	var count int
+	var count int64
 	if err := DB.Table("UserFriends").Count(&count).Error; err != nil {
 		t.Errorf("no error should happen, but got %v", err)
 	}

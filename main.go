@@ -402,7 +402,7 @@ func (s *DB) Pluck(column string, value interface{}) *DB {
 }
 
 // Count get how many records for a model
-func (s *DB) Count(value interface{}) *DB {
+func (s *DB) Count(value *int64) *DB {
 	return s.NewScope(s.Value).count(value).db
 }
 
@@ -443,8 +443,9 @@ func (s *DB) FirstOrCreate(out interface{}, where ...interface{}) *DB {
 
 // Update update attributes with callbacks, refer: https://jinzhu.github.io/gorm/crud.html#update
 // WARNING when update with struct, GORM will not update fields that with zero value
-func (s *DB) Update(attrs ...interface{}) *DB {
-	return s.Updates(toSearchableMap(attrs...), true)
+func (s *DB) Update(column string, value interface{}) *DB {
+	attrs := map[string]interface{}{column: value}
+	return s.Updates(toSearchableMap(attrs), true)
 }
 
 // Updates update attributes with callbacks, refer: https://jinzhu.github.io/gorm/crud.html#update
@@ -619,11 +620,6 @@ func (s *DB) WithContext(ctx context.Context) *DB {
 	db := s.clone()
 	db.ctx = ctx
 	return db
-}
-
-// NewRecord check if value's primary key is blank
-func (s *DB) NewRecord(value interface{}) bool {
-	return s.NewScope(value).PrimaryKeyZero()
 }
 
 // CreateTable create table for models

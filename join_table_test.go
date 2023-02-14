@@ -29,7 +29,7 @@ func (*PersonAddress) Add(handler gorm.JoinTableHandlerInterface, db *gorm.DB, f
 	if result := db.Unscoped().Model(&PersonAddress{}).Where(map[string]interface{}{
 		"person_id":  foreignPrimaryKey,
 		"address_id": associationPrimaryKey,
-	}).Update(map[string]interface{}{
+	}).Updates(map[string]interface{}{
 		"person_id":  foreignPrimaryKey,
 		"address_id": associationPrimaryKey,
 		"deleted_at": gorm.Expr("NULL"),
