@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
@@ -14,6 +15,7 @@ import (
 
 // Scope contain current operation's information when you perform any operation on the database
 type Scope struct {
+	ctx             context.Context
 	Search          *search
 	Value           interface{}
 	SQL             string
@@ -33,7 +35,7 @@ func (scope *Scope) IndirectValue() reflect.Value {
 
 // New create a new Scope without search information
 func (scope *Scope) New(value interface{}) *Scope {
-	return &Scope{db: scope.NewDB(), Search: &search{}, Value: value}
+	return &Scope{ctx: scope.ctx, db: scope.NewDB(), Search: &search{}, Value: value}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -361,7 +363,7 @@ func (scope *Scope) Exec() *Scope {
 	defer scope.trace(NowFunc())
 
 	if !scope.HasError() {
-		if result, err := scope.SQLDB().Exec(scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
+		if result, err := scope.SQLDB().ExecContext(scope.ctx, scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
 			if count, err := result.RowsAffected(); scope.Err(err) == nil {
 				scope.db.RowsAffected = count
 			}

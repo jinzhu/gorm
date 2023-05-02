@@ -130,7 +130,7 @@ func createCallback(scope *Scope) {
 
 		// execute create sql: no primaryField
 		if primaryField == nil {
-			if result, err := scope.SQLDB().Exec(scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
+			if result, err := scope.SQLDB().ExecContext(scope.ctx, scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
 				// set rows affected count
 				scope.db.RowsAffected, _ = result.RowsAffected()
 
@@ -146,7 +146,7 @@ func createCallback(scope *Scope) {
 
 		// execute create sql: lastInsertID implemention for majority of dialects
 		if lastInsertIDReturningSuffix == "" && lastInsertIDOutputInterstitial == "" {
-			if result, err := scope.SQLDB().Exec(scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
+			if result, err := scope.SQLDB().ExecContext(scope.ctx, scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
 				// set rows affected count
 				scope.db.RowsAffected, _ = result.RowsAffected()
 
@@ -162,7 +162,7 @@ func createCallback(scope *Scope) {
 
 		// execute create sql: dialects with additional lastInsertID requirements (currently postgres & mssql)
 		if primaryField.Field.CanAddr() {
-			if err := scope.SQLDB().QueryRow(scope.SQL, scope.SQLVars...).Scan(primaryField.Field.Addr().Interface()); scope.Err(err) == nil {
+			if err := scope.SQLDB().QueryRowContext(scope.ctx, scope.SQL, scope.SQLVars...).Scan(primaryField.Field.Addr().Interface()); scope.Err(err) == nil {
 				primaryField.IsBlank = false
 				scope.db.RowsAffected = 1
 			}

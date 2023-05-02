@@ -65,7 +65,7 @@ func queryCallback(scope *Scope) {
 			scope.SQL = fmt.Sprint(str) + scope.SQL
 		}
 
-		if rows, err := scope.SQLDB().Query(scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
+		if rows, err := scope.SQLDB().QueryContext(scope.ctx, scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
 			defer rows.Close()
 
 			columns, _ := rows.Columns()

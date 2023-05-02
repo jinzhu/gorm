@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -102,12 +103,12 @@ func (s *commonDialect) DataTypeOf(field *StructField) string {
 func (s commonDialect) HasIndex(tableName string, indexName string) bool {
 	var count int
 	currentDatabase, tableName := currentDatabaseAndTable(&s, tableName)
-	s.db.QueryRow("SELECT count(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = ? AND table_name = ? AND index_name = ?", currentDatabase, tableName, indexName).Scan(&count)
+	s.db.QueryRowContext(context.Background(), "SELECT count(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = ? AND table_name = ? AND index_name = ?", currentDatabase, tableName, indexName).Scan(&count)
 	return count > 0
 }
 
 func (s commonDialect) RemoveIndex(tableName string, indexName string) error {
-	_, err := s.db.Exec(fmt.Sprintf("DROP INDEX %v", indexName))
+	_, err := s.db.ExecContext(context.Background(), fmt.Sprintf("DROP INDEX %v", indexName))
 	return err
 }
 
@@ -118,24 +119,24 @@ func (s commonDialect) HasForeignKey(tableName string, foreignKeyName string) bo
 func (s commonDialect) HasTable(tableName string) bool {
 	var count int
 	currentDatabase, tableName := currentDatabaseAndTable(&s, tableName)
-	s.db.QueryRow("SELECT count(*) FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND table_name = ?", currentDatabase, tableName).Scan(&count)
+	s.db.QueryRowContext(context.Background(), "SELECT count(*) FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND table_name = ?", currentDatabase, tableName).Scan(&count)
 	return count > 0
 }
 
 func (s commonDialect) HasColumn(tableName string, columnName string) bool {
 	var count int
 	currentDatabase, tableName := currentDatabaseAndTable(&s, tableName)
-	s.db.QueryRow("SELECT count(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = ? AND table_name = ? AND column_name = ?", currentDatabase, tableName, columnName).Scan(&count)
+	s.db.QueryRowContext(context.Background(), "SELECT count(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = ? AND table_name = ? AND column_name = ?", currentDatabase, tableName, columnName).Scan(&count)
 	return count > 0
 }
 
 func (s commonDialect) ModifyColumn(tableName string, columnName string, typ string) error {
-	_, err := s.db.Exec(fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v TYPE %v", tableName, columnName, typ))
+	_, err := s.db.ExecContext(context.Background(), fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v TYPE %v", tableName, columnName, typ))
 	return err
 }
 
 func (s commonDialect) CurrentDatabase() (name string) {
-	s.db.QueryRow("SELECT DATABASE()").Scan(&name)
+	s.db.QueryRowContext(context.Background(), "SELECT DATABASE()").Scan(&name)
 	return
 }
 

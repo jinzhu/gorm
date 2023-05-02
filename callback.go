@@ -6,12 +6,13 @@ import "fmt"
 var DefaultCallback = &Callback{logger: nopLogger{}}
 
 // Callback is a struct that contains all CRUD callbacks
-//   Field `creates` contains callbacks will be call when creating object
-//   Field `updates` contains callbacks will be call when updating object
-//   Field `deletes` contains callbacks will be call when deleting object
-//   Field `queries` contains callbacks will be call when querying object with query methods like Find, First, Related, Association...
-//   Field `rowQueries` contains callbacks will be call when querying object with Row, Rows...
-//   Field `processors` contains all callback processors, will be used to generate above callbacks in order
+//
+//	Field `creates` contains callbacks will be call when creating object
+//	Field `updates` contains callbacks will be call when updating object
+//	Field `deletes` contains callbacks will be call when deleting object
+//	Field `queries` contains callbacks will be call when querying object with query methods like Find, First, Related, Association...
+//	Field `rowQueries` contains callbacks will be call when querying object with Row, Rows...
+//	Field `processors` contains all callback processors, will be used to generate above callbacks in order
 type Callback struct {
 	logger     logger
 	creates    []*func(scope *Scope)
@@ -48,13 +49,14 @@ func (c *Callback) clone(logger logger) *Callback {
 }
 
 // Create could be used to register callbacks for creating object
-//     db.Callback().Create().After("gorm:create").Register("plugin:run_after_create", func(*Scope) {
-//       // business logic
-//       ...
 //
-//       // set error if some thing wrong happened, will rollback the creating
-//       scope.Err(errors.New("error"))
-//     })
+//	db.Callback().Create().After("gorm:create").Register("plugin:run_after_create", func(*Scope) {
+//	  // business logic
+//	  ...
+//
+//	  // set error if some thing wrong happened, will rollback the creating
+//	  scope.Err(errors.New("error"))
+//	})
 func (c *Callback) Create() *CallbackProcessor {
 	return &CallbackProcessor{logger: c.logger, kind: "create", parent: c}
 }
@@ -109,7 +111,8 @@ func (cp *CallbackProcessor) Register(callbackName string, callback func(scope *
 }
 
 // Remove a registered callback
-//     db.Callback().Create().Remove("gorm:update_time_stamp_when_create")
+//
+//	db.Callback().Create().Remove("gorm:update_time_stamp_when_create")
 func (cp *CallbackProcessor) Remove(callbackName string) {
 	cp.logger.Print("info", fmt.Sprintf("[info] removing callback `%v` from %v", callbackName, fileWithLineNum()))
 	cp.name = callbackName
@@ -119,10 +122,11 @@ func (cp *CallbackProcessor) Remove(callbackName string) {
 }
 
 // Replace a registered callback with new callback
-//     db.Callback().Create().Replace("gorm:update_time_stamp_when_create", func(*Scope) {
-//		   scope.SetColumn("CreatedAt", now)
-//		   scope.SetColumn("UpdatedAt", now)
-//     })
+//
+//	    db.Callback().Create().Replace("gorm:update_time_stamp_when_create", func(*Scope) {
+//			   scope.SetColumn("CreatedAt", now)
+//			   scope.SetColumn("UpdatedAt", now)
+//	    })
 func (cp *CallbackProcessor) Replace(callbackName string, callback func(scope *Scope)) {
 	cp.logger.Print("info", fmt.Sprintf("[info] replacing callback `%v` from %v", callbackName, fileWithLineNum()))
 	cp.name = callbackName
@@ -133,7 +137,8 @@ func (cp *CallbackProcessor) Replace(callbackName string, callback func(scope *S
 }
 
 // Get registered callback
-//    db.Callback().Create().Get("gorm:create")
+//
+//	db.Callback().Create().Get("gorm:create")
 func (cp *CallbackProcessor) Get(callbackName string) (callback func(scope *Scope)) {
 	for _, p := range cp.parent.processors {
 		if p.name == callbackName && p.kind == cp.kind {
