@@ -12,6 +12,20 @@ import (
 	"time"
 )
 
+type callbackType string
+
+const (
+	callbackTypeBeforeCreate callbackType = "BeforeCreate"
+	callbackTypeBeforeUpdate callbackType = "BeforeUpdate"
+	callbackTypeAfterCreate  callbackType = "AfterCreate"
+	callbackTypeAfterUpdate  callbackType = "AfterUpdate"
+	callbackTypeBeforeSave   callbackType = "BeforeSave"
+	callbackTypeAfterSave    callbackType = "AfterSave"
+	callbackTypeBeforeDelete callbackType = "BeforeDelete"
+	callbackTypeAfterDelete  callbackType = "AfterDelete"
+	callbackTypeAfterFind    callbackType = "AfterFind"
+)
+
 // Scope contain current operation's information when you perform any operation on the database
 type Scope struct {
 	Search          *search
@@ -239,17 +253,17 @@ func (scope *Scope) SetColumn(column interface{}, value interface{}) error {
 }
 
 // CallMethod call scope value's method, if it is a slice, will call its element's method one by one
-func (scope *Scope) CallMethod(methodName string) {
+func (scope *Scope) CallMethod(callback callbackType) {
 	if scope.Value == nil {
 		return
 	}
 
 	if indirectScopeValue := scope.IndirectValue(); indirectScopeValue.Kind() == reflect.Slice {
 		for i := 0; i < indirectScopeValue.Len(); i++ {
-			scope.callMethod(methodName, indirectScopeValue.Index(i))
+			scope.callMethod(callback, indirectScopeValue.Index(i))
 		}
 	} else {
-		scope.callMethod(methodName, indirectScopeValue)
+		scope.callMethod(callback, indirectScopeValue)
 	}
 }
 
@@ -429,13 +443,46 @@ func (scope *Scope) CommitOrRollback() *Scope {
 // Private Methods For *gorm.Scope
 ////////////////////////////////////////////////////////////////////////////////
 
-func (scope *Scope) callMethod(methodName string, reflectValue reflect.Value) {
+// This unrolling is needed to show to the compiler the exact set of methods
+// that can be used on the modelType.
+// Prior to go1.22 any use of MethodByName would cause the linker to
+// abandon dead code elimination for the entire binary.
+// As of go1.22 the compiler supports one special case of a string constant
+// being passed to MethodByName. For enterprise customers or those building
+// large binaries, this gives a significant reduction in binary size.
+// https://github.com/golang/go/issues/62257
+func callBackToMethodValue(modelType reflect.Value, cbType callbackType) reflect.Value {
+	switch cbType {
+	case callbackTypeBeforeCreate:
+		return modelType.MethodByName(string(callbackTypeBeforeCreate))
+	case callbackTypeAfterCreate:
+		return modelType.MethodByName(string(callbackTypeAfterCreate))
+	case callbackTypeBeforeUpdate:
+		return modelType.MethodByName(string(callbackTypeBeforeUpdate))
+	case callbackTypeAfterUpdate:
+		return modelType.MethodByName(string(callbackTypeAfterUpdate))
+	case callbackTypeBeforeSave:
+		return modelType.MethodByName(string(callbackTypeBeforeSave))
+	case callbackTypeAfterSave:
+		return modelType.MethodByName(string(callbackTypeAfterSave))
+	case callbackTypeBeforeDelete:
+		return modelType.MethodByName(string(callbackTypeBeforeDelete))
+	case callbackTypeAfterDelete:
+		return modelType.MethodByName(string(callbackTypeAfterDelete))
+	case callbackTypeAfterFind:
+		return modelType.MethodByName(string(callbackTypeAfterFind))
+	default:
+		return reflect.ValueOf(nil)
+	}
+}
+
+func (scope *Scope) callMethod(callback callbackType, reflectValue reflect.Value) {
 	// Only get address from non-pointer
 	if reflectValue.CanAddr() && reflectValue.Kind() != reflect.Ptr {
 		reflectValue = reflectValue.Addr()
 	}
 
-	if methodValue := reflectValue.MethodByName(methodName); methodValue.IsValid() {
+	if methodValue := callBackToMethodValue(reflectValue, callback); methodValue.IsValid() {
 		switch method := methodValue.Interface().(type) {
 		case func():
 			method()
@@ -454,7 +501,7 @@ func (scope *Scope) callMethod(methodName string, reflectValue reflect.Value) {
 			scope.Err(method(newDB))
 			scope.Err(newDB.Error)
 		default:
-			scope.Err(fmt.Errorf("unsupported function %v", methodName))
+			scope.Err(fmt.Errorf("unsupported function %v", callback))
 		}
 	}
 }

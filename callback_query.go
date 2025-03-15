@@ -100,6 +100,6 @@ func queryCallback(scope *Scope) {
 // afterQueryCallback will invoke `AfterFind` method after querying
 func afterQueryCallback(scope *Scope) {
 	if !scope.HasError() {
-		scope.CallMethod("AfterFind")
+		scope.CallMethod(callbackTypeAfterFind)
 	}
 }

@@ -21,7 +21,7 @@ func beforeDeleteCallback(scope *Scope) {
 		return
 	}
 	if !scope.HasError() {
-		scope.CallMethod("BeforeDelete")
+		scope.CallMethod(callbackTypeBeforeDelete)
 	}
 }
 
@@ -58,6 +58,6 @@ func deleteCallback(scope *Scope) {
 // afterDeleteCallback will invoke `AfterDelete` method after deleting
 func afterDeleteCallback(scope *Scope) {
 	if !scope.HasError() {
-		scope.CallMethod("AfterDelete")
+		scope.CallMethod(callbackTypeAfterDelete)
 	}
 }
